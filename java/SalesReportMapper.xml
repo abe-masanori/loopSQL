@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="loopSQL.mapper.SalesReportMapper">
+
+  <select id="selectAllMembers" resultType="loopSQL.dto.Member">
+    SELECT  -- selectAllMembers
+      member_id,
+      premium_member_flag
+    FROM
+      members
+    ORDER BY
+      member_id
+  </select>
+
+  <select id="selectOrders" resultType="loopSQL.dto.Order">
+    SELECT -- selectOrders
+      order_id,
+      order_member_id,
+      order_date,
+      order_item_id,
+      order_quantity
+     FROM
+       orders
+     WHERE
+       order_member_id = #{memberId}
+     ORDER BY
+       order_id
+  </select>
+
+  <select id="selectPremiumPrice" resultType="loopSQL.dto.Price">
+    SELECT -- selectPremiumPrice
+      item_id,
+      item_price
+    FROM
+      premium_prices
+    WHERE
+      item_id = #{itemId}
+  </select>
+
+  <select id="selectStandardPrice" resultType="loopSQL.dto.Price">
+    SELECT -- selectStandardPrice
+      item_id,
+      item_price
+    FROM
+      standard_prices
+    WHERE
+      item_id = #{itemId}
+  </select>
+
+  <select id="selectReportData" resultType="loopSQL.dto.SalesReportLine">
+    SELECT -- selectReportData
+      m.member_id member_id,
+      sum(CASE
+            WHEN m.premium_member_flag = 'Y' AND pp.item_id IS NOT NULL
+            THEN o.order_quantity * pp.item_price
+            ELSE o.order_quantity * sp.item_price
+          END
+      ) total_amount
+    FROM
+      members m
+    INNER JOIN
+      orders o ON (m.member_id = o.order_member_id)
+    LEFT OUTER JOIN
+      premium_prices pp ON (o.order_item_id = pp.item_id)
+    INNER JOIN
+      standard_prices sp ON (o.order_item_id = sp.item_id)
+    GROUP BY
+      m.member_id
+    ORDER BY
+      m.member_id
+  </select>
+
+  <select id="selectAllPremiumPrices" resultType="loopSQL.dto.Price">
+    SELECT -- selectAllPremiumPrices
+      item_id,
+      item_price
+    FROM
+      premium_prices
+  </select>
+
+  <select id="selectAllStandardPrices" resultType="loopSQL.dto.Price">
+    SELECT -- selectAllStandardPrices
+      item_id,
+      item_price
+    FROM
+      standard_prices
+  </select>
+
+</mapper>
